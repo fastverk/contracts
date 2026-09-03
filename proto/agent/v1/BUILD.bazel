@@ -1,0 +1,40 @@
+"""agent.v1 — coordination-fabric DTOs (messages, annotation, lineage, events).
+
+Extracted from github.com/fastverk/agents proto/agent/v1/. The Go operator,
+Rust agent-coord / agent services, and agent-runner stay in that repo.
+"""
+
+load("@protobuf//bazel:proto_library.bzl", "proto_library")
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files([
+    "annotation.proto",
+    "events.proto",
+    "lineage.proto",
+    "messages.proto",
+])
+
+filegroup(
+    name = "srcs",
+    srcs = [
+        "annotation.proto",
+        "events.proto",
+        "lineage.proto",
+        "messages.proto",
+    ],
+)
+
+# The four files are package agent.v1 and independent (no cross-imports).
+# One proto_library matches the source agents BUILD; strip_import_prefix keeps
+# `import "agent/v1/..."` paths working under //proto.
+proto_library(
+    name = "agent_proto",
+    srcs = [
+        "annotation.proto",
+        "events.proto",
+        "lineage.proto",
+        "messages.proto",
+    ],
+    strip_import_prefix = "/proto",
+)

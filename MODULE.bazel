@@ -4,13 +4,14 @@
 #
 #   bazel_dep(name = "fastverk_contracts", version = "0.0.1")
 #
-# without pulling forge-gateway OCI, Linear adapters, the finder daemon, or the
-# wave CLI/operator. Those implementations stay in their own repos.
+# without pulling forge-gateway OCI, Linear adapters, the finder daemon, the
+# wave CLI/operator, or the agents operator/services. Those implementations
+# stay in their own repos.
 #
 # This does not claim the published implementation module names (`forge`,
-# `tracker`, `service_finder`, `wave`). Those remain the names on
-# github.com/fastverk/{forge,tracker,service-finder,wave} until follow-up PRs
-# there bazel_dep this module. See LEDGER.md.
+# `tracker`, `service_finder`, `wave`, `fastverk_agents`). Those remain the
+# names on github.com/fastverk/{forge,tracker,service-finder,wave,agents}
+# until follow-up PRs there bazel_dep this module. See LEDGER.md.
 module(
     name = "fastverk_contracts",
     version = "0.0.1",

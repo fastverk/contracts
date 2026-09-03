@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+// agent/v1/annotation.proto — the live semantic self-annotation layer
+// (docs/agent-coord.md §"Semantic self-annotation"). Two machineries:
+//   - Claim: exact structured resource keys held as TTL leases (agent-claims KV,
+//     atomic CAS) → cooperative blackboard, not hard locking; crashed agents'
+//     claims expire.
+//   - Focus: fuzzy free-text intent + concept tags (agent-focus KV) for
+//     discovery via find_agents(query). This is the high-frequency plane — it
+//     lives in NATS/KV, and only a COARSE summary is reflected onto
+//     Agent.status.focus (mirror the field names in operator/api/v1/agent_types.go).
+
+package agent.v1;
+
+// ClaimMode is the access intent of a resource claim.
+enum ClaimMode {
+  CLAIM_MODE_UNSPECIFIED = 0;
+  READ = 1;   // reading/observing the resource
+  WRITE = 2;  // editing the resource (advisory-exclusive)
+  INTENT = 3; // planning to touch it soon (a coarse reservation)
+}
+
+// Focus — an agent's COARSE live semantic annotation: what it is working on, for
+// discovery. Free-text intent + structured hints. Held in the agent-focus KV and
+// reflected (low-frequency) onto Agent.status.focus.
+message Focus {
+  string intent = 1;          // free-text ("porting aion/web CI onto rules_ci")
+  repeated string files = 2;  // file paths in view (e.g. "src/auth.rs")
+  repeated string symbols = 3;// symbols in view (e.g. "AuthService")
+  repeated string concepts = 4;// fuzzy tags (e.g. "auth", "ci-migration")
+  string updated_at = 5;      // RFC 3339
+}
+
+// Claim — a TTL lease on one structured resource key (agent-claims KV, atomic
+// compare-and-set). A soft advisory lock: a crashed agent's claim expires, so
+// there are no stuck locks.
+message Claim {
+  // ResourceKey is the exact key, e.g. "file:aion/web:src/auth.rs",
+  // "symbol:AuthService", "resource:RepoReadiness/aion-web".
+  string resource_key = 1;
+  string agent = 2;      // holder agent id
+  ClaimMode mode = 3;
+  string ttl = 4;        // lease duration (Go duration string, e.g. "5m")
+  string expires_at = 5; // RFC 3339 absolute expiry (server-derived from ttl)
+}

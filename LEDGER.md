@@ -32,6 +32,7 @@ Dockerfile, operator, or deploy trees.
 | `tracker.v1` | imported | [fastverk/tracker](https://github.com/fastverk/tracker) | `3927db97f7904e5362271187177175b82a39a005` | `tracker` | `0.0.4` | `tracker` 0.0.1–0.0.4 | `proto/tracker/v1/tracker.proto`. Tags `v0.0.1`–`v0.0.4`. |
 | `fastverk.finder.v1` | imported | [fastverk/service-finder](https://github.com/fastverk/service-finder) | `abc764147a63ef0c48b84ad102010980ed8d5415` | `service_finder` | `0.0.1` | *not published* | `proto/fastverk/finder/v1/finder.proto`. Source tags are `service-finder-client-v0.0.1`–`v0.0.3` (Rust client crate), not the Bazel module. |
 | `wave.v1` | imported | [fastverk/wave](https://github.com/fastverk/wave) | `c689d650fe33e34507c42d3dcb65c56954454a07` | `wave` | `0.1.0` | `wave` 0.0.1 only | `proto/wave/v1/wave.proto`. Source tags include `v0.0.1`, `v0.1.0`, `v0.2.0`; MODULE.bazel on HEAD is `0.1.0`. Registry has not caught up. |
+| `agent.v1` | imported | [fastverk/agents](https://github.com/fastverk/agents) (private) | `9312188d1b35f5f109fa5340c2845db577552e63` | `fastverk_agents` | `0.1.0` | *not published* | `proto/agent/v1/{annotation,events,lineage,messages}.proto`. Byte-copied from private source via box `gh`; BUILD is new (contracts conventions — `@protobuf` `proto_library`, no `rust_prost_library`). |
 
 ### Source module names — do not silently rename
 
@@ -43,15 +44,17 @@ Verified against each source repo's `MODULE.bazel` on the SHA above:
 | `fastverk/tracker` | `tracker` 0.0.4 | proto only, under `fastverk_contracts` |
 | `fastverk/service-finder` | `service_finder` 0.0.1 (declared; not on the registry) | proto only, under `fastverk_contracts` |
 | `fastverk/wave` | `wave` 0.1.0 (registry still at 0.0.1) | proto only, under `fastverk_contracts` |
+| `fastverk/agents` | `fastverk_agents` 0.1.0 (private; not on the registry) | proto only, under `fastverk_contracts` |
 
 Publishing proto-only modules that reuse `forge` / `tracker` / `service_finder`
-/ `wave` would collide with those identities (`@forge//:forge` is a Rust
-library + OCI image today). This vehicle uses `fastverk_contracts` instead.
+/ `wave` / `fastverk_agents` would collide with those identities (`@forge//:forge`
+is a Rust library + OCI image today; `@fastverk_agents` owns the operator +
+services). This vehicle uses `fastverk_contracts` instead.
 
 ## Follow-up PRs on implementation repos
 
 This PR only fills `fastverk/contracts`. Do **not** drive-by rewrite
-forge / tracker / wave / service-finder here.
+forge / tracker / wave / service-finder / agents here.
 
 When those repos are ready, each should `bazel_dep(name = "fastverk_contracts", ...)`
 and data-dep / `proto_library`-dep the labels above, then stop exporting their
@@ -62,13 +65,14 @@ proto.
 - [ ] [fastverk/tracker](https://github.com/fastverk/tracker) — `bazel_dep` this; keep `module(name = "tracker")` (gateway + Linear adapter)
 - [ ] [fastverk/service-finder](https://github.com/fastverk/service-finder) — `bazel_dep` this; keep `module(name = "service_finder")` (daemon + client)
 - [ ] [fastverk/wave](https://github.com/fastverk/wave) — `bazel_dep` this; keep `module(name = "wave")` (CLI + operator)
+- [ ] [fastverk/agents](https://github.com/fastverk/agents) — `bazel_dep` this; keep `module(name = "fastverk_agents")` (operator + agent-coord + agent-runner)
 - [ ] Publish `fastverk_contracts` to `registry.tbzl.dev` / `registry.fastverk.com` via tomato-bazel/bazel-registry `rels`
 
 ## Pending
 
 | Package | Status | Source | Notes |
 | --- | --- | --- | --- |
-| `agent.v1` | pending | private `fastverk/agents` | Lives in a private repo. This run cannot fetch it. Ledger as pending until private access; do not invent the proto here. |
+| *(none)* | — | — | `agent.v1` imported in this PR. |
 
 ## Excludes
 
@@ -84,6 +88,8 @@ Do not import these into this vehicle.
 | tracker Linear adapter / gateway / OCI | excluded | implementation; stays in `fastverk/tracker` |
 | service-finder daemon / Rust client / Helm | excluded | implementation; stays in `fastverk/service-finder` |
 | wave CLI / wave-core / operator / Helm | excluded | implementation; stays in `fastverk/wave` |
+| agents `dispatch.v1` / `fanout.v1` | excluded | sibling packages in private `fastverk/agents` (`proto/dispatch/v1`, `proto/fanout/v1`); not the `agent.v1` public contract |
+| agents operator / Rust services / agent-runner / OCI | excluded | implementation; stays in `fastverk/agents` |
 
 ## AIP lint
 
@@ -97,4 +103,5 @@ this PR.
 
 Byte-copy of `proto/` from each source default-branch HEAD (not `git subtree`
 of the whole implementation repo). BUILD files here are new: source repos
-only `exports_files` the `.proto`s and compile them from `build.rs`.
+only `exports_files` the `.proto`s and compile them from `build.rs` (agents
+also declares `rust_prost_library`; this vehicle stays proto-only).

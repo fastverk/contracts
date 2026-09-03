@@ -5,6 +5,7 @@ package(default_visibility = ["//visibility:public"])
 filegroup(
     name = "all_protos",
     srcs = [
+        "//proto/agent/v1:srcs",
         "//proto/fastverk/finder/v1:srcs",
         "//proto/forge/v1:srcs",
         "//proto/tracker/v1:srcs",
