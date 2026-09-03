@@ -8,10 +8,12 @@ lint:
     - STANDARD
   except:
     # These contracts predate AIP-shaped RPCs (ReadFile, PipelineStatus,
-    # Resolve, …). Do not rewrite imported protos in this extract.
+    # Resolve, …) and use existing service names (Finder, EventSink,
+    # ForgeWrite, ForgeDiscovery). Do not rewrite imported protos here.
     - RPC_REQUEST_STANDARD_NAME
     - RPC_RESPONSE_STANDARD_NAME
     - RPC_REQUEST_RESPONSE_UNIQUE
+    - SERVICE_SUFFIX
     - ENUM_VALUE_PREFIX
     - ENUM_ZERO_VALUE_SUFFIX
     - PACKAGE_VERSION_SUFFIX
