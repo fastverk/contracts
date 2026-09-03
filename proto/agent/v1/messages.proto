@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+// agent/v1/messages.proto — the wire envelope for every byte on the agent
+// coordination fabric (docs/agent-coord.md). These ride NATS core / JetStream:
+// direct sends on `agents.<id>.inbox`, channel bytes on `channels.<chan-id>`,
+// fleet fan-out on `agents.broadcast`. The durable rendezvous/identity lives in
+// the CRDs (AgentChannel, Agent); only the bytes flow here. Matches the
+// string-normalized style of forge/v1 (RFC 3339 times, opaque bodies).
+
+package agent.v1;
+
+// MessageKind classifies a ChannelMessage's intent so a receiver can route it
+// without decoding the (opaque) body.
+enum MessageKind {
+  MESSAGE_KIND_UNSPECIFIED = 0;
+  MESSAGE_TEXT = 1;    // free-form text / agent-to-agent chatter
+  MESSAGE_OFFER = 2;   // a handoff/merge offer (the request half of the handshake)
+  MESSAGE_ACCEPT = 3;  // accept an offer
+  MESSAGE_REJECT = 4;  // reject an offer
+  MESSAGE_CONTROL = 5; // lifecycle/control signal (heartbeat, close, cancel)
+}
+
+// ChannelMessage — the envelope carried by every fabric subject. `to` and
+// `channel` are mutually informative (a direct send sets `to`; a channel send
+// sets `channel`); `body` is opaque (JSON/proto/text — the sender + receiver
+// agree out of band). `correlation_id` pairs request/reply and offer→accept.
+message ChannelMessage {
+  string from = 1;           // sender agent id
+  string to = 2;             // recipient agent id (direct send) — "" on a channel/broadcast
+  string channel = 3;        // AgentChannel name / subject when this rides a channel
+  MessageKind kind = 4;
+  bytes body = 5;            // opaque payload
+  string ts = 6;             // RFC 3339 send time
+  string correlation_id = 7; // request/reply + offer/accept pairing key ("" if none)
+}
+
+// DirectMessage — a point-to-point send to one agent's inbox
+// (`agents.<to>.inbox`). A thin routing wrapper over ChannelMessage.
+message DirectMessage {
+  string to = 1;              // recipient agent id (the inbox owner)
+  ChannelMessage message = 2;
+}
+
+// Broadcast — a fleet-wide fan-out on `agents.broadcast`.
+message Broadcast {
+  ChannelMessage message = 1;
+}

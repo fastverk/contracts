@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+// agent/v1/events.proto — the (optional) durable audit record for the fleet.
+// Core NATS is ephemeral; when replay/audit is needed, lifecycle events land on
+// the JetStream `agent-events` stream (docs/agent-coord.md §"NATS subject
+// namespace"). This is the replayable log behind the console's provenance-DAG
+// and debugging views. Kept flat + opaque-detail so any producer can append.
+
+package agent.v1;
+
+// AgentEventKind is the lifecycle taxonomy of an AgentEvent (mirrors the CRD
+// phase transitions across Agent / AgentTask / HumanPrompt).
+enum AgentEventKind {
+  AGENT_EVENT_KIND_UNSPECIFIED = 0;
+  AGENT_SPAWNED = 1;      // Agent created from a profile
+  AGENT_ANNOTATED = 2;    // focus/annotation updated
+  CLAIM_ACQUIRED = 3;     // a resource claim lease taken
+  CLAIM_RELEASED = 4;     // a claim released/expired
+  CHECKPOINTED = 5;       // a checkpoint externalized
+  HANDED_OFF = 6;         // task handed off to another agent/profile
+  MERGED = 7;             // tasks merged (work-product/context)
+  HUMAN_PROMPTED = 8;     // a HumanPrompt was raised
+  PROMPT_ANSWERED = 9;    // a HumanPrompt was answered
+  SUSPENDED = 10;         // agent checkpointed + suspended (Job exited)
+  RESUMED = 11;           // agent rehydrated from a checkpoint
+  TASK_COMPLETED = 12;    // AgentTask reached a terminal success (PROpened/Merged)
+  TASK_FAILED = 13;       // AgentTask failed
+}
+
+// AgentEvent — one record on the durable audit stream.
+message AgentEvent {
+  string agent_id = 1;    // the Agent the event concerns ("" for task-only events)
+  string task_id = 2;     // the AgentTask the event concerns ("" for agent-only events)
+  AgentEventKind kind = 3;
+  string ts = 4;          // RFC 3339 event time
+  string detail = 5;      // free-form (checkpoint ref, target agent, reason, ...)
+}

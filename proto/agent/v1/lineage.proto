@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+// agent/v1/lineage.proto — the checkpoint/handoff bulk-context payloads
+// (docs/agent-coord.md §"Checkpoint / resume" + §"Handoff / merge"). The bulky
+// blob lives in the object store (S3); a pointer + metadata rides the control
+// plane on AgentTask.status.checkpoints[] / AgentTask.spec.lineage. Never a fat
+// CR — these are the wire/blob shapes, CheckpointMeta mirrors the CRD
+// operator/api/v1.Checkpoint field-for-field.
+
+package agent.v1;
+
+// HandoffContext — the context an agent hands to a successor on handoff (the
+// bulky blob is an S3 ref; the live offer→accept handshake is NATS request/reply
+// carrying MESSAGE_OFFER/MESSAGE_ACCEPT). The successor agent-runner resumes from it.
+message HandoffContext {
+  string summary = 1;              // where things stand / what's been done
+  string branch = 2;               // git WIP branch ref the successor continues on
+  repeated string remaining = 3;   // outstanding work items
+  repeated string artifact_refs = 4;// S3/OCI refs (checkpoints, diffs, logs)
+}
+
+// CheckpointMeta — the pointer + metadata for one externalized checkpoint. The
+// bundle ({git WIP/branch ref, context summary, active claims, progress markers,
+// pending-prompt answers}) is the S3 blob at `ref`; this metadata rides
+// AgentTask.status.checkpoints[]. Resume = spawn-from-profile with resumeFrom=ref.
+message CheckpointMeta {
+  string ref = 1;        // s3://.../ck-3 (the checkpoint blob)
+  string sha = 2;        // git WIP sha at snapshot
+  int64 tokens_used = 3; // context tokens consumed at snapshot
+  string ts = 4;         // RFC 3339 snapshot time
+  string summary = 5;    // short progress summary
+}
