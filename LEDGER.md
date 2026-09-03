@@ -105,3 +105,14 @@ Byte-copy of `proto/` from each source default-branch HEAD (not `git subtree`
 of the whole implementation repo). BUILD files here are new: source repos
 only `exports_files` the `.proto`s and compile them from `build.rs` (agents
 also declares `rust_prost_library`; this vehicle stays proto-only).
+
+## Drift audit
+
+[`drift.yml`](.github/workflows/drift.yml) runs daily (report-only, off the
+PR path; `workflow_dispatch` available) and compares each imported row's
+Source SHA to the source repo's default-branch HEAD. A drifted row is
+fixed by byte-copying that source's `proto/` from default-branch HEAD
+(BUILD files here stay contracts-local), then updating that row's
+Source SHA. Do not `git subtree` the implementation repo.
+
+Private/unreachable sources (e.g. `fastverk/agents`) are warnings only.
