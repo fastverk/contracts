@@ -1,0 +1,56 @@
+"""forge.v1 — ForgeService, ForgeProvisionService, ForgeDiscovery, EventSink, ForgeWrite.
+
+Extracted from github.com/fastverk/forge proto/forge/v1/. Adapters and the
+forge-gateway binary stay in that repo.
+"""
+
+load("@protobuf//bazel:proto_library.bzl", "proto_library")
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files([
+    "discovery.proto",
+    "events.proto",
+    "forge.proto",
+    "provision.proto",
+])
+
+filegroup(
+    name = "srcs",
+    srcs = [
+        "discovery.proto",
+        "events.proto",
+        "forge.proto",
+        "provision.proto",
+    ],
+)
+
+proto_library(
+    name = "discovery_proto",
+    srcs = ["discovery.proto"],
+    strip_import_prefix = "/proto",
+)
+
+proto_library(
+    name = "events_proto",
+    srcs = ["events.proto"],
+    strip_import_prefix = "/proto",
+    deps = [":discovery_proto"],
+)
+
+proto_library(
+    name = "forge_proto",
+    srcs = ["forge.proto"],
+    strip_import_prefix = "/proto",
+    deps = [
+        ":discovery_proto",
+        ":events_proto",
+    ],
+)
+
+proto_library(
+    name = "provision_proto",
+    srcs = ["provision.proto"],
+    strip_import_prefix = "/proto",
+    deps = [":forge_proto"],
+)

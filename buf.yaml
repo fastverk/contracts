@@ -1,0 +1,20 @@
+# Buf module over the public proto tree. proto_library is the Bazel API;
+# this file lets `buf build` / `buf lint` work from the same sources.
+version: v2
+modules:
+  - path: proto
+lint:
+  use:
+    - STANDARD
+  except:
+    # These contracts predate AIP-shaped RPCs (ReadFile, PipelineStatus,
+    # Resolve, …). Do not rewrite imported protos in this extract.
+    - RPC_REQUEST_STANDARD_NAME
+    - RPC_RESPONSE_STANDARD_NAME
+    - RPC_REQUEST_RESPONSE_UNIQUE
+    - ENUM_VALUE_PREFIX
+    - ENUM_ZERO_VALUE_SUFFIX
+    - PACKAGE_VERSION_SUFFIX
+breaking:
+  use:
+    - FILE

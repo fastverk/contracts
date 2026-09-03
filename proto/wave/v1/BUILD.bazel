@@ -1,0 +1,22 @@
+"""wave.v1 — durable wave store / interchange schema.
+
+Extracted from github.com/fastverk/wave proto/wave/v1/. The CLI, wave-core
+engine, and operator stay in that repo.
+"""
+
+load("@protobuf//bazel:proto_library.bzl", "proto_library")
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files(["wave.proto"])
+
+filegroup(
+    name = "srcs",
+    srcs = ["wave.proto"],
+)
+
+proto_library(
+    name = "wave_proto",
+    srcs = ["wave.proto"],
+    strip_import_prefix = "/proto",
+)

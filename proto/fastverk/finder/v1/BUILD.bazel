@@ -1,0 +1,22 @@
+"""fastverk.finder.v1 — Finder (Resolve / Watch).
+
+Extracted from github.com/fastverk/service-finder proto/fastverk/finder/v1/.
+The finder daemon and Rust client stay in that repo.
+"""
+
+load("@protobuf//bazel:proto_library.bzl", "proto_library")
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files(["finder.proto"])
+
+filegroup(
+    name = "srcs",
+    srcs = ["finder.proto"],
+)
+
+proto_library(
+    name = "finder_proto",
+    srcs = ["finder.proto"],
+    strip_import_prefix = "/proto",
+)
