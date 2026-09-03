@@ -1,0 +1,46 @@
+"""Public aliases for the four proto packages.
+
+Consumers depend on `@fastverk_contracts//:forge_proto` (etc.) or on the
+package-local labels under `//proto/...`. The `.proto` files are also exported
+so a cargo_build_script can data-dep them the same way the implementation
+repos do today.
+"""
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files(["MODULE.bazel"])
+
+alias(
+    name = "forge_proto",
+    actual = "//proto/forge/v1:forge_proto",
+)
+
+alias(
+    name = "forge_provision_proto",
+    actual = "//proto/forge/v1:provision_proto",
+)
+
+alias(
+    name = "forge_discovery_proto",
+    actual = "//proto/forge/v1:discovery_proto",
+)
+
+alias(
+    name = "forge_events_proto",
+    actual = "//proto/forge/v1:events_proto",
+)
+
+alias(
+    name = "tracker_proto",
+    actual = "//proto/tracker/v1:tracker_proto",
+)
+
+alias(
+    name = "finder_proto",
+    actual = "//proto/fastverk/finder/v1:finder_proto",
+)
+
+alias(
+    name = "wave_proto",
+    actual = "//proto/wave/v1:wave_proto",
+)

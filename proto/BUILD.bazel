@@ -1,0 +1,13 @@
+"""All public `.proto` sources as one filegroup."""
+
+package(default_visibility = ["//visibility:public"])
+
+filegroup(
+    name = "all_protos",
+    srcs = [
+        "//proto/fastverk/finder/v1:srcs",
+        "//proto/forge/v1:srcs",
+        "//proto/tracker/v1:srcs",
+        "//proto/wave/v1:srcs",
+    ],
+)

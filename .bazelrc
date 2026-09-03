@@ -1,0 +1,13 @@
+# Match the public half of the fastverk / tomato-bazel fleet bazelrc.
+# registry.tbzl.dev first (published forge/tracker/wave/rules_aip), then BCR.
+common --enable_bzlmod
+common --experimental_isolated_extension_usages
+common --registry=https://registry.tbzl.dev/
+common --registry=https://bcr.bazel.build/
+
+# Prebuilt protoc: proto_library should not require a C++ toolchain.
+# Same flag rules_aip documents for protobuf 33.x.
+common --@protobuf//bazel/toolchains:prefer_prebuilt_protoc
+
+test --test_output=errors
+test --test_summary=terse

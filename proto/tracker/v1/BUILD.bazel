@@ -1,0 +1,22 @@
+"""tracker.v1 — TrackerService.
+
+Extracted from github.com/fastverk/tracker proto/tracker/v1/. The Linear
+adapter and tracker-gateway stay in that repo.
+"""
+
+load("@protobuf//bazel:proto_library.bzl", "proto_library")
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files(["tracker.proto"])
+
+filegroup(
+    name = "srcs",
+    srcs = ["tracker.proto"],
+)
+
+proto_library(
+    name = "tracker_proto",
+    srcs = ["tracker.proto"],
+    strip_import_prefix = "/proto",
+)
