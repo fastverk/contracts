@@ -1,0 +1,28 @@
+# Report-only source-drift audit. This vehicle is one Bazel module
+# (`fastverk_contracts`); the check does not rewrite or bump it. It only
+# compares LEDGER.md Source SHAs to each source repo's default-branch HEAD.
+#
+# Not on pull_request or push — it must not gate PRs or duplicate ci.yml.
+
+name: drift
+
+on:
+  schedule:
+    # Off-peak UTC, staggered off tomato-bazel/rules (04:17) and
+    # fastverk/platform (04:37) so the vehicles do not all audit together.
+    - cron: "57 4 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  drift:
+    name: source drift
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: check imported SHAs against source default branches
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 tools/ci/check_drift.py
