@@ -106,3 +106,7 @@ Bazel is the supported API.
 
 Apache-2.0 (this repository). Source proto files were copied from the
 implementation repos; provenance is in [LEDGER.md](LEDGER.md).
+
+## Product project directory
+
+The additive `fastverk.product.v1` product directory contract is authored here and exported as `@fastverk_contracts//:product_project_proto`. See [transport, ownership, and adoption limits](tools/project/README.md). Existing imported protos are unchanged.

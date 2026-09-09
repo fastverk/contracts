@@ -116,3 +116,7 @@ fixed by byte-copying that source's `proto/` from default-branch HEAD
 Source SHA. Do not `git subtree` the implementation repo.
 
 Private/unreachable sources (e.g. `fastverk/agents`) are warnings only.
+
+## Contracts authored here
+
+`fastverk.product.v1` project directory is a new additive contract, not an extraction of WorkspaceService or TrackerService. No copied-source SHA applies. Service implementation and deployment are tracked in the owning consumer repository; see `tools/project/README.md`.

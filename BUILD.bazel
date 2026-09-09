@@ -44,3 +44,8 @@ alias(
     name = "wave_proto",
     actual = "//proto/wave/v1:wave_proto",
 )
+
+alias(
+    name = "product_project_proto",
+    actual = "//proto/fastverk/product/v1:project_proto",
+)
