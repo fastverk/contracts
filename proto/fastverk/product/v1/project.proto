@@ -11,7 +11,38 @@ service ProductProjectService {
   rpc GetProject(GetProjectRequest) returns (GetProjectResponse);
   rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse);
   rpc RenameProject(RenameProjectRequest) returns (RenameProjectResponse);
+  rpc AdvanceProject(AdvanceProjectRequest) returns (AdvanceProjectResponse);
+  rpc GetProjectWork(GetProjectWorkRequest) returns (GetProjectWorkResponse);
 }
+
+// The durable product projection of one admitted execution. The agent fleet
+// remains authoritative for execution; this record binds its stable run name
+// and retained context to the authenticated project across browser reloads.
+message ProjectWork {
+  string project_id = 1;
+  string run_name = 2;
+  string objective = 3;
+  string context = 4;
+  string profile_ref = 5;
+  // The fleet's current FanoutRun phase. ADMITTING means the durable intent was
+  // reserved but admission has not yet been confirmed and may be retried.
+  string phase = 6;
+  // Opaque mutation key returned only so an uncertain admission can be resumed
+  // after reload without creating another run.
+  string retry_key = 7;
+}
+
+message AdvanceProjectRequest {
+  string project_id = 1;
+  // Optional retained note. At most 100 words, where words are non-empty runs
+  // separated by Unicode White_Space. Reject over-limit input; never truncate.
+  string context = 2;
+  string idempotency_key = 3;
+}
+
+message AdvanceProjectResponse { ProjectWork work = 1; }
+message GetProjectWorkRequest { string project_id = 1; }
+message GetProjectWorkResponse { optional ProjectWork work = 1; }
 
 message ProductProject {
   // Server-generated opaque, URL-safe ID; independent of name, never reused.

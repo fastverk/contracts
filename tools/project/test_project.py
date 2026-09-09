@@ -35,6 +35,28 @@ class ProjectWire(unittest.TestCase):
         source = p.RenameProjectRequest(project_id="p1", name="Renamed", expected_revision=2**53+1, idempotency_key="retry_1")
         self.assertEqual(p.RenameProjectRequest.FromString(source.SerializeToString()), source)
 
+    def test_work_admission_retains_context_and_retry_identity(self):
+        work = p.ProjectWork(
+            project_id="p1",
+            run_name="product-p1",
+            objective="Restore the build",
+            context="Keep the fix small.",
+            profile_ref="scoping-measure",
+            phase="ADMITTING",
+            retry_key="advance_1",
+        )
+        response = p.AdvanceProjectResponse(work=work)
+        self.assertEqual(
+            p.AdvanceProjectResponse.FromString(response.SerializeToString()),
+            response,
+        )
+        self.assertEqual(
+            p.GetProjectWorkResponse.FromString(
+                p.GetProjectWorkResponse(work=work).SerializeToString()
+            ).work,
+            work,
+        )
+
     def test_unknown_error_code_is_preserved_for_fail_closed_consumer(self):
         error = p.ProjectError(code=99, message="Future failure")
         self.assertEqual(p.ProjectError.FromString(error.SerializeToString()).code, 99)
