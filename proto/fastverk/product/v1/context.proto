@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package fastverk.product.v1;
+
+// Optional user-supplied context attached to work. This does not replace a
+// provider work-item identity, derived work order, or workspace specification.
+message ExecutionContext {
+  // Preserve exactly as submitted, including whitespace, even on rejection.
+  // Empty input is valid. At most 100 words are permitted. A word is a maximal
+  // nonempty run outside the Unicode White_Space set: U+0009..U+000D, U+0020,
+  // U+0085, U+00A0, U+1680, U+2000..U+200A, U+2028, U+2029, U+202F, U+205F,
+  // U+3000. In particular, U+FEFF and U+200B are not separators. Do not use
+  // language-dependent whitespace predicates without testing this contract.
+  string additional_context = 1;
+}
+
+// Advisory validation response, not an authorization or execution receipt.
+// Servers MUST independently validate before accepting work; client-supplied
+// counts or results are never authoritative. This schema itself enforces none
+// of these rules. Consumers must implement them and run the conformance corpus.
+message ContextValidation {
+  // Original input, unchanged for both accepted and rejected results.
+  ExecutionContext context = 1;
+  uint32 word_count = 2;
+  uint32 word_limit = 3;
+  ContextValidationStatus status = 4;
+}
+
+enum ContextValidationStatus {
+  // Missing or unknown status cannot be interpreted as accepted.
+  CONTEXT_VALIDATION_STATUS_UNSPECIFIED = 0;
+  CONTEXT_VALIDATION_STATUS_ACCEPTED = 1;
+  CONTEXT_VALIDATION_STATUS_WORD_LIMIT_EXCEEDED = 2;
+}

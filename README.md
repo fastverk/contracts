@@ -28,10 +28,12 @@ See [LEDGER.md](LEDGER.md).
 | `forge.v1` | `ForgeService`, `ForgeProvisionService`, `ForgeDiscovery`, `EventSink`, `ForgeWrite` | [fastverk/forge](https://github.com/fastverk/forge) |
 | `tracker.v1` | `TrackerService` | [fastverk/tracker](https://github.com/fastverk/tracker) |
 | `fastverk.finder.v1` | `Finder` (`Resolve` / `Watch`) | [fastverk/service-finder](https://github.com/fastverk/service-finder) |
+| `fastverk.product.v1` | execution-context interchange (no service) | Consumer adoption pending |
 | `wave.v1` | store / interchange schema (no gRPC service) | [fastverk/wave](https://github.com/fastverk/wave) |
 
-`.proto` files are copied from each source repo's default-branch HEAD. They
-are not rewritten here.
+Imported `.proto` files are copied from each source repo's default-branch HEAD.
+The additive `fastverk.product.v1` execution-context contract is authored here;
+see [conformance](tools/conformance/README.md) for its limits and adoption status.
 
 ## Consume
 
@@ -69,6 +71,7 @@ Public `proto_library` labels:
 | `@fastverk_contracts//:forge_events_proto` | `forge.v1` (`EventSink`, `ForgeWrite`) |
 | `@fastverk_contracts//:tracker_proto` | `tracker.v1` |
 | `@fastverk_contracts//:finder_proto` | `fastverk.finder.v1` |
+| `@fastverk_contracts//:execution_context_proto` | `fastverk.product.v1` |
 | `@fastverk_contracts//:wave_proto` | `wave.v1` |
 
 The `.proto` files are also `exports_files` / `filegroup` targets, so a

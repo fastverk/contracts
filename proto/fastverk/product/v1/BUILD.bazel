@@ -2,8 +2,13 @@ load("@protobuf//bazel:proto_library.bzl", "proto_library")
 
 package(default_visibility = ["//visibility:public"])
 
-exports_files(["project.proto"])
-filegroup(name = "srcs", srcs = ["project.proto"])
+exports_files(["context.proto", "project.proto"])
+filegroup(name = "srcs", srcs = ["context.proto", "project.proto"])
+proto_library(
+    name = "context_proto",
+    srcs = ["context.proto"],
+    strip_import_prefix = "/proto",
+)
 proto_library(
     name = "project_proto",
     srcs = ["project.proto"],
