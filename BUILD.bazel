@@ -49,3 +49,8 @@ alias(
     name = "execution_context_proto",
     actual = "//proto/fastverk/product/v1:context_proto",
 )
+
+alias(
+    name = "product_project_proto",
+    actual = "//proto/fastverk/product/v1:project_proto",
+)

@@ -1,0 +1,103 @@
+syntax = "proto3";
+
+package fastverk.product.v1;
+
+// Product work directory. This is not workspace provisioning, a tracker
+// adapter, or an agent authority. Creating a project never dispatches work,
+// grants capabilities, or creates a repository. All calls require verified
+// authentication; no request can supply or override the principal partition.
+service ProductProjectService {
+  rpc CreateProject(CreateProjectRequest) returns (CreateProjectResponse);
+  rpc GetProject(GetProjectRequest) returns (GetProjectResponse);
+  rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse);
+  rpc RenameProject(RenameProjectRequest) returns (RenameProjectResponse);
+}
+
+message ProductProject {
+  // Server-generated opaque, URL-safe ID; independent of name, never reused.
+  string project_id = 1;
+  // Trim Unicode White_Space at both ends; 1..200 Unicode scalar values.
+  // Internal whitespace is preserved. No case folding or normalization.
+  string name = 2;
+  // Optional, verbatim user text; at most 4000 Unicode scalar values.
+  // Absent and explicitly empty are distinct and must survive round-trips.
+  optional string outcome = 3;
+  // Starts at 1, increments once for each successful rename (even same name).
+  // A replay does not increment. Clients must preserve uint64 precision.
+  uint64 revision = 4;
+}
+
+message CreateProjectRequest {
+  string name = 1;
+  optional string outcome = 2;
+  // 1..128 ASCII letters, digits, '_' or '-'. Required on every mutation.
+  // Scoped to authenticated principal and RPC method. Persist atomically with
+  // the mutation. Same key + identical known field values (including optional
+  // presence and untrimmed input) returns the original response. A changed
+  // payload conflicts. Compare values, not nondeterministic protobuf encoding.
+  // Keep replay records for the lifetime of this directory; no implicit TTL.
+  string idempotency_key = 3;
+}
+
+message CreateProjectResponse {
+  ProductProject project = 1;
+}
+
+message GetProjectRequest {
+  string project_id = 1;
+}
+
+message GetProjectResponse {
+  ProductProject project = 1;
+}
+
+message ListProjectsRequest {
+  // Zero selects 50. Valid explicit sizes are 1..100; larger values reject.
+  uint32 page_size = 1;
+  // Opaque continuation from this authenticated directory; never an owner ID.
+  string page_token = 2;
+}
+
+message ListProjectsResponse {
+  // Ascending opaque project ID. Each page is strongly consistent, but pages
+  // are not a single snapshot. Rename preserves ordering; new projects before
+  // the cursor appear only on refresh. Empty directories return an empty list.
+  repeated ProductProject projects = 1;
+  // Empty when this query is exhausted. Tokens confer no access rights.
+  string next_page_token = 2;
+}
+
+message RenameProjectRequest {
+  string project_id = 1;
+  string name = 2;
+  // Required nonzero compare-and-swap revision. A stale revision conflicts.
+  uint64 expected_revision = 3;
+  // Same replay semantics as CreateProjectRequest. Authenticate first, then
+  // check replay before expected_revision so retries after a lost reply work.
+  string idempotency_key = 4;
+}
+
+message RenameProjectResponse {
+  // Outcome and ID are unchanged. Revision increments exactly once.
+  ProductProject project = 1;
+}
+
+// Binary HTTP error body. Codes map to canonical gRPC statuses; see transport
+// documentation. Missing/unknown codes are failures, never success. Messages
+// are safe user-facing text, not upstream credentials or storage diagnostics.
+message ProjectError {
+  ProjectErrorCode code = 1;
+  string message = 2;
+}
+
+enum ProjectErrorCode {
+  PROJECT_ERROR_CODE_UNSPECIFIED = 0;
+  PROJECT_ERROR_CODE_INVALID_ARGUMENT = 1;
+  PROJECT_ERROR_CODE_UNAUTHENTICATED = 2;
+  PROJECT_ERROR_CODE_PERMISSION_DENIED = 3;
+  // Missing and other-principal project IDs are indistinguishable.
+  PROJECT_ERROR_CODE_NOT_FOUND = 4;
+  PROJECT_ERROR_CODE_CONFLICT = 5;
+  PROJECT_ERROR_CODE_UNAVAILABLE = 6;
+  PROJECT_ERROR_CODE_INTERNAL = 7;
+}
