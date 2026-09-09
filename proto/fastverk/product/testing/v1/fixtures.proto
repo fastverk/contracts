@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package fastverk.product.testing.v1;
+
+import "fastverk/product/v1/context.proto";
+
+// Portable conformance corpus for generated clients and service validators.
+message ContextFixtures {
+  repeated ContextCase cases = 1;
+}
+
+message ContextCase {
+  string name = 1;
+  fastverk.product.v1.ExecutionContext input = 2;
+  uint32 expected_word_count = 3;
+  fastverk.product.v1.ContextValidationStatus expected_status = 4;
+}

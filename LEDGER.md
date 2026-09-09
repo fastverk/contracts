@@ -116,3 +116,7 @@ fixed by byte-copying that source's `proto/` from default-branch HEAD
 Source SHA. Do not `git subtree` the implementation repo.
 
 Private/unreachable sources (e.g. `fastverk/agents`) are warnings only.
+
+## Contracts authored here
+
+`fastverk.product.v1` is an additive execution-context interchange contract. It has no upstream service implementation or copied-source SHA. `fastverk.product.testing.v1` supplies the portable conformance corpus schema. Runtime adoption is pending; see `tools/conformance/README.md`.
