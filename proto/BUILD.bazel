@@ -6,6 +6,8 @@ filegroup(
     name = "all_protos",
     srcs = [
         "//proto/agent/v1:srcs",
+        "//proto/fastverk/product/v1:srcs",
+        "//proto/fastverk/product/testing/v1:srcs",
         "//proto/fastverk/finder/v1:srcs",
         "//proto/forge/v1:srcs",
         "//proto/tracker/v1:srcs",

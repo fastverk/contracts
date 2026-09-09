@@ -1,0 +1,12 @@
+load("@protobuf//bazel:proto_library.bzl", "proto_library")
+
+package(default_visibility = ["//visibility:public"])
+
+exports_files(["fixtures.proto"])
+filegroup(name = "srcs", srcs = ["fixtures.proto"])
+proto_library(
+    name = "fixtures_proto",
+    srcs = ["fixtures.proto"],
+    strip_import_prefix = "/proto",
+    deps = ["//proto/fastverk/product/v1:context_proto"],
+)
