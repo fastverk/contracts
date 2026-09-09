@@ -29,7 +29,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+      - run: sudo rm -f /etc/apt/sources.list.d/google-chrome.list /etc/apt/sources.list.d/google-chrome.sources && sudo apt-get update && sudo apt-get install -y protobuf-compiler
       - run: python -m pip install protobuf==5.29.5
       - run: bash tools/conformance/run_context.sh
 
@@ -40,6 +40,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: sudo apt-get update && sudo apt-get install -y protobuf-compiler
+      - run: sudo rm -f /etc/apt/sources.list.d/google-chrome.list /etc/apt/sources.list.d/google-chrome.sources && sudo apt-get update && sudo apt-get install -y protobuf-compiler
       - run: python -m pip install protobuf==5.29.5
       - run: bash tools/project/run.sh
