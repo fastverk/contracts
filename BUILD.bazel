@@ -54,3 +54,8 @@ alias(
     name = "product_project_proto",
     actual = "//proto/fastverk/product/v1:project_proto",
 )
+
+alias(
+    name = "forge_guarded_provision_proto",
+    actual = "//proto/forge/v1:guarded_provision_proto",
+)

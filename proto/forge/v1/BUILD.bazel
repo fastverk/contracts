@@ -12,6 +12,7 @@ exports_files([
     "discovery.proto",
     "events.proto",
     "forge.proto",
+    "guarded_provision.proto",
     "provision.proto",
 ])
 
@@ -21,6 +22,7 @@ filegroup(
         "discovery.proto",
         "events.proto",
         "forge.proto",
+        "guarded_provision.proto",
         "provision.proto",
     ],
 )
@@ -53,4 +55,14 @@ proto_library(
     srcs = ["provision.proto"],
     strip_import_prefix = "/proto",
     deps = [":forge_proto"],
+)
+
+proto_library(
+    name = "guarded_provision_proto",
+    srcs = ["guarded_provision.proto"],
+    strip_import_prefix = "/proto",
+    deps = [
+        ":forge_proto",
+        ":provision_proto",
+    ],
 )

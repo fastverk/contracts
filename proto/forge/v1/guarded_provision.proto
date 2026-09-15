@@ -1,0 +1,146 @@
+syntax = "proto3";
+
+package forge.v1;
+
+import "forge/v1/forge.proto";
+import "forge/v1/provision.proto";
+
+// Interactive provisioning with atomic confirmation preconditions. This is a
+// separate service so old servers return UNIMPLEMENTED instead of ignoring new
+// fields on an unconditional mutation. Clients MUST NOT fall back to the legacy
+// provisioning service. It requires the same explicit administration authority.
+service GuardedForgeProvisionService {
+  rpc GetProvisionSnapshot(GetProvisionSnapshotRequest) returns (GetProvisionSnapshotResponse);
+  rpc GuardedArchiveRepo(GuardedArchiveRepoRequest) returns (GuardedArchiveRepoResponse);
+  rpc GuardedDeleteRepo(GuardedDeleteRepoRequest) returns (GuardedDeleteRepoResponse);
+  rpc GuardedEnsureProtection(GuardedEnsureProtectionRequest) returns (GuardedEnsureProtectionResponse);
+  rpc GetProvisionMutation(GetProvisionMutationRequest) returns (GetProvisionMutationResponse);
+}
+
+// Both values are opaque, nonempty, durable, and issued by the owning service.
+// Incarnation changes on delete/recreate, including identical configuration.
+// Configuration changes on every committed settings/lifecycle/protection change,
+// including legacy writes. Reverting values MUST NOT revive an old revision.
+// Git head/base revisions are a separate domain, not this configuration token.
+message ProvisionRevision {
+  string incarnation = 1;
+  string configuration = 2;
+}
+
+message GetProvisionSnapshotRequest {
+  RepoRef repo = 1;
+  // Empty requests repository state only. Otherwise includes this exact branch's
+  // protection state in the same consistent snapshot as the revision.
+  string branch = 2;
+}
+
+message GetProvisionSnapshotResponse {
+  bool found = 1;
+  // Both present iff found. A legacy repo must acquire durable incarnation
+  // identity before it can be returned as a guarded snapshot.
+  ProvisionedRepo repo = 2;
+  ProvisionRevision revision = 3;
+  string branch = 4;
+  bool protection_found = 5;
+  // Present iff protection_found; false is explicit absence, not read failure.
+  Protection protection = 6;
+}
+
+// Every mutation requires nonempty expected values and a caller-generated key.
+// Missing/malformed values are INVALID_ARGUMENT. A revision mismatch is
+// FAILED_PRECONDITION with no side effects. Verification and mutation share the
+// same serialization boundary as all other configuration writers.
+message GuardedArchiveRepoRequest {
+  RepoRef repo = 1;
+  ProvisionRevision expected = 2;
+  string idempotency_key = 3;
+}
+message GuardedArchiveRepoResponse { ProvisionMutationReceipt receipt = 1; }
+
+message GuardedDeleteRepoRequest {
+  RepoRef repo = 1;
+  ProvisionRevision expected = 2;
+  // Must still equal repo.name; revision checks do not replace this safeguard.
+  string confirm_name = 3;
+  string idempotency_key = 4;
+}
+message GuardedDeleteRepoResponse { ProvisionMutationReceipt receipt = 1; }
+
+message GuardedEnsureProtectionRequest {
+  RepoRef repo = 1;
+  ProvisionRevision expected = 2;
+  string branch = 3;
+  ProtectionSpec spec = 4;
+  string idempotency_key = 5;
+}
+message GuardedEnsureProtectionResponse { ProvisionMutationReceipt receipt = 1; }
+
+// Server-verified provenance, never identity supplied by the requesting client.
+message ProvisionActor {
+  string issuer = 1;
+  string subject = 2;
+}
+
+enum ProvisionMutationPhase {
+  PROVISION_MUTATION_PHASE_UNSPECIFIED = 0;
+  // Durable intent exists; completion has not been established.
+  PROVISION_MUTATION_PHASE_PENDING = 1;
+  // Owning-service postcondition verified. This is the only success phase.
+  PROVISION_MUTATION_PHASE_SUCCEEDED = 2;
+  // No effects remain; a reason suitable for the caller is recorded.
+  PROVISION_MUTATION_PHASE_FAILED = 3;
+  // Effects may exist. No automatic replay or success claim is permitted until
+  // reconciliation establishes the outcome for the original incarnation.
+  PROVISION_MUTATION_PHASE_RECONCILIATION_REQUIRED = 4;
+}
+
+message ArchivedProvisionResult { ProvisionedRepo repo = 1; }
+message DeletedProvisionResult {
+  // True only after deletion of the original incarnation is verified.
+  bool confirmed = 1;
+}
+message ProtectionProvisionResult { Protection protection = 1; }
+
+// Keys bind actor, repository incarnation, operation kind and complete payload.
+// An identical authorized retry returns this operation, not a new mutation.
+// Different input reusing the key is ALREADY_EXISTS. Check current authorization
+// before returning a retry/lookup, even after the repository has been deleted.
+// Never disclose another actor's receipt based solely on possession of its key.
+//
+// Retain full terminal receipts for at least 30 days. After compaction retain
+// durable deduplication tombstones for the supported operation namespace; an
+// expired receipt yields FAILED_PRECONDITION and MUST NOT execute a new write.
+// Nonterminal receipts cannot expire. Repository deletion does not purge these
+// records, and incarnation identity prevents reuse against a replacement.
+message ProvisionMutationReceipt {
+  string operation_id = 1;
+  ProvisionActor actor = 2;
+  oneof request {
+    GuardedArchiveRepoRequest archive = 3;
+    GuardedDeleteRepoRequest delete = 4;
+    GuardedEnsureProtectionRequest protection = 5;
+  }
+  ProvisionMutationPhase phase = 6;
+  // Present only on successful archive/protection, absent on deletion.
+  ProvisionRevision resulting_revision = 7;
+  oneof result {
+    ArchivedProvisionResult archived = 8;
+    DeletedProvisionResult deleted = 9;
+    ProtectionProvisionResult protection_saved = 10;
+  }
+  // Caller-safe explanation; never credentials or internal exception dumps.
+  string detail = 11;
+  int64 created_at_unix_seconds = 12;
+  int64 updated_at_unix_seconds = 13;
+}
+
+message GetProvisionMutationRequest {
+  RepoRef repo = 1;
+  string incarnation = 2;
+  string idempotency_key = 3;
+}
+message GetProvisionMutationResponse {
+  // Unknown keys are NOT_FOUND, expired receipts FAILED_PRECONDITION, denied
+  // access PERMISSION_DENIED. Never return an empty successful response.
+  ProvisionMutationReceipt receipt = 1;
+}

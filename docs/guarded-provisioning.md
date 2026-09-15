@@ -1,6 +1,9 @@
 # Guarded repository provisioning
 
-Design for fastverk/geetch#72. This proposal is not an implemented capability.
+Draft contract for fastverk/geetch#72. The protobuf surface is defined in
+`proto/forge/v1/guarded_provision.proto` and exported as
+`//:forge_guarded_provision_proto`. No serving implementation or runtime
+conformance is established yet.
 
 Interactive archive, deletion, and protection confirmation must reject changes
 made since the user reviewed the repository. Existing provisioning requests
@@ -9,7 +12,7 @@ followed by an unconditional write cannot enforce this requirement.
 
 ## Protocol
 
-Add distinct guarded RPCs to the provisioning contract. Do not add optional
+Use the separate `GuardedForgeProvisionService` for guarded RPCs. Do not add optional
 precondition fields to existing mutation RPCs: an older protobuf server would
 ignore unknown fields and execute an unconditional mutation. Older servers must
 answer a guarded method with UNIMPLEMENTED. Clients must not fall back to an
@@ -58,9 +61,10 @@ The idempotency key binds the authenticated caller, repository incarnation,
 operation kind, expected revision, and exact payload. An identical authorized
 retry returns the original receipt; reuse for different input is ALREADY_EXISTS.
 Deletion receipts must survive repository removal without becoming receipts for
-a replacement repository. Retention and expired-key behavior must be explicit
-before implementation is released; an expired key must not silently authorize a
-new destructive operation against a replacement.
+a replacement repository. Retain full terminal receipts for at least 30 days, nonterminal receipts until
+resolved, and durable deduplication tombstones afterward. Expired receipts
+return FAILED_PRECONDITION and cannot authorize a new mutation. Deletion does
+not purge operation history or tombstones.
 
 Geetch must coordinate its filesystem and metadata through durable operation
 records and recovery. A transaction cannot atomically delete Git files and a
