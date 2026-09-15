@@ -67,6 +67,7 @@ Public `proto_library` labels:
 | --- | --- |
 | `@fastverk_contracts//:forge_proto` | `forge.v1` (`ForgeService`) |
 | `@fastverk_contracts//:forge_provision_proto` | `forge.v1` (`ForgeProvisionService`) |
+| `@fastverk_contracts//:forge_guarded_provision_proto` | `forge.v1` (`GuardedForgeProvisionService`, draft; serving adoption pending) |
 | `@fastverk_contracts//:forge_discovery_proto` | `forge.v1` (`ForgeDiscovery`) |
 | `@fastverk_contracts//:forge_events_proto` | `forge.v1` (`EventSink`, `ForgeWrite`) |
 | `@fastverk_contracts//:tracker_proto` | `tracker.v1` |
