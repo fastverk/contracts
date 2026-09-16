@@ -130,6 +130,33 @@ message Delivery {
   bool active = 3;
 }
 
+// Durable outcome of delivering one forge event to one configured receiver.
+// Receipts let an administrator distinguish configuration from an event that
+// the receiver actually accepted. Failed attempts remain pending for retry;
+// removing the parent Delivery removes its receipts as part of that teardown.
+enum DeliveryReceiptState {
+  DELIVERY_RECEIPT_STATE_UNSPECIFIED = 0;
+  DELIVERY_RECEIPT_STATE_PENDING = 1;
+  DELIVERY_RECEIPT_STATE_ACCEPTED = 2;
+}
+
+message DeliveryReceipt {
+  // Stable event deduplication key assigned by the forge.
+  string event_id = 1;
+  // Delivery.id of the receiver that was attempted.
+  string delivery_id = 2;
+  DeliveryReceiptState state = 3;
+  uint32 attempts = 4;
+  // Most recent receiver/network failure. Empty after acceptance.
+  string last_error = 5;
+  int64 created_at_unix_seconds = 6;
+  int64 updated_at_unix_seconds = 7;
+  // Zero until accepted by the receiver.
+  int64 accepted_at_unix_seconds = 8;
+  // Zero once accepted; otherwise the earliest scheduled retry time.
+  int64 next_attempt_at_unix_seconds = 9;
+}
+
 message EnsuredDelivery {
   Delivery delivery = 1;
   // False when an equivalent delivery already existed (idempotent re-run).
@@ -189,6 +216,18 @@ message EnsureDeliveryResponse { EnsuredDelivery delivery = 1; }
 message ListDeliveriesRequest { RepoRef repo = 1; }
 message ListDeliveriesResponse { repeated Delivery deliveries = 1; }
 
+message ListDeliveryReceiptsRequest {
+  RepoRef repo = 1;
+  // Empty returns receipts for every configured delivery on the repository.
+  string delivery_id = 2;
+  // Server-capped; zero selects the server default.
+  uint32 limit = 3;
+}
+message ListDeliveryReceiptsResponse {
+  // Newest activity first.
+  repeated DeliveryReceipt receipts = 1;
+}
+
 message RemoveDeliveryRequest {
   RepoRef repo = 1;
   string id = 2;
@@ -208,5 +247,6 @@ service ForgeProvisionService {
 
   rpc EnsureDelivery(EnsureDeliveryRequest) returns (EnsureDeliveryResponse);
   rpc ListDeliveries(ListDeliveriesRequest) returns (ListDeliveriesResponse);
+  rpc ListDeliveryReceipts(ListDeliveryReceiptsRequest) returns (ListDeliveryReceiptsResponse);
   rpc RemoveDelivery(RemoveDeliveryRequest) returns (RemoveDeliveryResponse);
 }
