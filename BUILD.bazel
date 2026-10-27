@@ -59,3 +59,9 @@ alias(
     name = "forge_guarded_provision_proto",
     actual = "//proto/forge/v1:guarded_provision_proto",
 )
+
+# Shared data only; fleet control RPCs stay in their owning implementation.
+alias(
+    name = "work_execution_proto",
+    actual = "//proto/fastverk/work/v1:execution_proto",
+)

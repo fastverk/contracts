@@ -1,0 +1,129 @@
+syntax = "proto3";
+package fastverk.work.v1;
+
+// Shared DATA contracts for one immutable WorkOrder -> one run -> one task.
+// No service, scheduler, authored WorkOrder, auction, payment or credential.
+// References do not grant authority. All consumers must fail closed on unknown
+// authority/state/finality values and unsupported fields in admission commands.
+
+message ArtifactRef {
+  // Approved resolver URI; never fetch arbitrary caller URLs with credentials.
+  string uri = 1;
+  bytes sha256 = 2; // exactly 32 bytes, hash of referenced immutable bytes
+  uint64 size_bytes = 3;
+  string media_type = 4;
+  string schema_version = 5;
+}
+message WorkOrderRef {
+  string order_id = 1;
+  string as_of = 2; // opaque corpus cursor, NOT repository/environment revision
+  ArtifactRef packet = 3; // exact upstream-derived WorkOrder; no customer-data import
+}
+message WorkBinding {
+  string binding_id = 1;
+  string attempt_id = 2;
+  WorkOrderRef order = 3;
+  ArtifactRef input_manifest = 4;
+  ArtifactRef environment_manifest = 5;
+  ArtifactRef effect_policy = 6;
+  ArtifactRef acceptance_policy = 7;
+  string repository = 8; // explicit owner/name; this version is repository-backed
+  string source_commit = 9; // full 40-hex Git commit, independent of order.as_of
+  string profile_ref = 10; // also resolved/pinned by environment_manifest
+  optional string project_id = 11; // association, never project admission authority
+  string context_id = 12; // A2A context binding, distinct from all fleet IDs
+}
+message WorkExecutionIntent {
+  WorkBinding binding = 1;
+  // Exact run-wide token ceiling, positive and <= INT64_MAX. Zero is refused,
+  // never the legacy dispatch API's "unbounded" default. No unit conversion.
+  uint64 token_limit = 2;
+}
+
+enum ExecutionState {
+  EXECUTION_STATE_UNSPECIFIED = 0;
+  EXECUTION_STATE_ADMITTING = 1; // durable intent; upstream outcome uncertain
+  EXECUTION_STATE_ADMITTED = 2; // fleet acknowledgment bound to stable run/task
+  EXECUTION_STATE_RUNNING = 3;
+  EXECUTION_STATE_CANCEL_REQUESTED = 4; // does not prove work stopped
+  EXECUTION_STATE_CANCELED = 5; // task stopped under acknowledged fence; usage may remain provisional
+  EXECUTION_STATE_SUCCEEDED = 6; // execution completed, NOT artifact acceptance
+  EXECUTION_STATE_FAILED = 7;
+  EXECUTION_STATE_INDETERMINATE = 8; // reconcile same operation; never blind redispatch
+}
+enum UsageFinality {
+  USAGE_FINALITY_UNSPECIFIED = 0;
+  USAGE_FINALITY_PROVISIONAL = 1;
+  USAGE_FINALITY_FINAL = 2;
+}
+message TokenUsage {
+  // CUMULATIVE run total, all providers/attempted execution within this one task.
+  // Never a delta; never add it to a task projection of the same usage.
+  uint64 consumed_tokens = 1;
+  uint64 sequence = 2; // starts at 1, monotone; changed/reordered samples conflict
+  UsageFinality finality = 3;
+  string run_name = 4;
+  string task_name = 5;
+  string meter_authority = 6; // derived from authenticated meter identity, not trusted input
+  uint64 fence_epoch = 7;
+  // FINAL only after terminal execution + fence/drain acknowledgment, no unknown
+  // or outstanding resources, complete measurement and authenticated evidence.
+  ArtifactRef drain_evidence = 8;
+}
+message WorkExecution {
+  string execution_id = 1;
+  WorkExecutionIntent intent = 2;
+  uint64 revision = 3; // CAS, starts at 1; every committed state/meter change increments
+  ExecutionState state = 4;
+  string run_name = 5;
+  string task_name = 6;
+  // Actual admitted ceiling; equal to intent.token_limit or admission refuses.
+  // Zero until upstream acknowledgment. Not evidence of real enforcement by itself.
+  uint64 effective_token_limit = 7;
+  uint64 fence_epoch = 8;
+  TokenUsage usage = 9; // absent = unavailable, never "zero spent"
+  // Optional independently issued receipt. SUCCEEDED alone cannot populate it.
+  ArtifactRef acceptance_receipt = 10;
+  // Authenticated stop/fence acknowledgment required before CANCELED. It does
+  // not establish complete resource measurement; FINAL usage is separate.
+  ArtifactRef fence_receipt = 11;
+}
+
+enum AdmissionVerdict {
+  ADMISSION_VERDICT_UNSPECIFIED = 0;
+  ADMISSION_VERDICT_ADMITTING = 1; // saved operation, possibly no confirmed fleet run
+  ADMISSION_VERDICT_REFUSED = 2;
+}
+enum RefusalReason {
+  REFUSAL_REASON_UNSPECIFIED = 0;
+  REFUSAL_REASON_HELD = 1;
+  REFUSAL_REASON_OVERLAP = 2;
+  REFUSAL_REASON_STALE = 3;
+  REFUSAL_REASON_LIMIT = 4;
+  REFUSAL_REASON_UNSUPPORTED = 5;
+  REFUSAL_REASON_NOT_AUTHORIZED = 6;
+}
+message AdmissionReceipt {
+  AdmissionVerdict verdict = 1;
+  // Present for ADMITTING only. Retry returns the original saved receipt;
+  // Get reads current state. No admission success is inferred from a spec log.
+  WorkExecution execution = 2;
+  RefusalReason refusal = 3;
+  string reason = 4; // diagnostic only, never a machine acceptance predicate
+}
+message CancelIntent {
+  string execution_id = 1;
+  uint64 expected_revision = 2;
+  string reason = 3;
+}
+enum CancellationDisposition {
+  CANCELLATION_DISPOSITION_UNSPECIFIED = 0;
+  CANCELLATION_DISPOSITION_REQUESTED = 1;
+  CANCELLATION_DISPOSITION_ALREADY_TERMINAL = 2;
+}
+message CancellationReceipt {
+  CancellationDisposition disposition = 1;
+  WorkExecution execution = 2;
+  // A REQUESTED receipt does not mean CANCELED, usage FINAL, or a refund.
+  // Fencing acknowledgment is reflected by the execution state/fence epoch.
+}
