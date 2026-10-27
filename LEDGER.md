@@ -122,3 +122,9 @@ Private/unreachable sources (e.g. `fastverk/agents`) are warnings only.
 `fastverk.product.v1` is an additive execution-context interchange contract. It has no upstream service implementation or copied-source SHA. `fastverk.product.testing.v1` supplies the portable conformance corpus schema. Runtime adoption is pending; see `tools/conformance/README.md`.
 
 `fastverk.product.v1` project directory is a new additive contract, not an extraction of WorkspaceService or TrackerService. No copied-source SHA applies. Service implementation and deployment are tracked in the owning consumer repository; see `tools/project/README.md`.
+
+`fastverk.work.v1` is a new data-only, import-free binding/execution/receipt
+contract authored here. It references upstream WorkOrders and artifact manifests;
+it does not extract private fleet RPCs or redefine an authored WorkOrder.
+Admission/cancellation/meter service implementations stay with their owning
+consumer. Conformance and remaining adoption work: `docs/work-execution.md`.

@@ -12,5 +12,6 @@ filegroup(
         "//proto/forge/v1:srcs",
         "//proto/tracker/v1:srcs",
         "//proto/wave/v1:srcs",
+        "//proto/fastverk/work/v1:srcs",
     ],
 )

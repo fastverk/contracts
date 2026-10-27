@@ -114,3 +114,8 @@ implementation repos; provenance is in [LEDGER.md](LEDGER.md).
 ## Product project directory
 
 The additive `fastverk.product.v1` product directory contract is authored here and exported as `@fastverk_contracts//:product_project_proto`. See [transport, ownership, and adoption limits](tools/project/README.md). Existing imported protos are unchanged.
+
+The additive [`fastverk.work.v1` data contract](docs/work-execution.md) supplies
+one-order execution bindings and admission/cancellation/usage receipts. It has
+no served RPC and includes no auction or monetary settlement. Use
+`//:work_execution_proto`; executable conformance is `bash tools/work/run.sh`.
